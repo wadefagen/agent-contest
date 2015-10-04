@@ -130,26 +130,14 @@ var finishedDay = function() {
       }
     });
 
-
-
-
-
-
-    var resultsTemplate = hbs.compile(fs.readFileSync('./server/results.hbs', 'utf8'));
-
-    var days = [];
-    for (var i = 0; i < contest.capitalData().day; i++) {
-      days.push("" + (i + 1));
-    }
-
-    var output = resultsTemplate({ days: days, constestHistoryArray: constestHistoryArray });
-
-
-
-    //fs.writeFileSync("./server-log/latest.html", output);
-    //fs.writeFileSync("./server-log/" + Date.now() + ".html", output);
-    fs.writeFileSync("/var/www/html/jsContest/results/latest.html", output);
-    fs.writeFileSync("/var/www/html/jsContest/results/" + Date.now() + ".html", output);
+    // Write output as JSON
+    var output = JSON.stringify({
+      players: contestHistory,
+      capital: contest.capitalData()
+    });
+    
+    fs.writeFileSync("/var/www/html/jsContest/results/latest.json", output);
+    fs.writeFileSync("/var/www/html/jsContest/results/" + Date.now() + ".json", output);
 
     process.exit();
 
