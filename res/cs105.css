@@ -1,0 +1,32 @@
+.cs105-mp-header {
+	background-color: #e67e22;
+	color: #ecf0f1;
+	padding-bottom: 10px;
+	border-bottom: solid 1px #d35400;
+}
+
+.cs105-mp-header img {
+	float: left;
+	margin: 15px 15px 0px -10px;
+}
+
+
+.cs105-mp-header p {
+	font-size: 16px;
+}
+
+td.numbertile{
+	width:80px;
+	font-size:40;
+	text-align:center;
+}
+tr.numberrow{
+	height:80px;
+}
+
+
+
+
+
+
+

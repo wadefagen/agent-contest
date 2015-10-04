@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>CS 105: Hunger Games Contest Results</title>
+		<link rel="icon" type="image/png" href="https://cs105.cs.illinois.edu/res/favicon.png" />
+
+    <!-- CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+    <style>
+    .row { clear: both; white-space: nowrap; }
+    .row:first-of-type { border-bottom: solid 1px black; font-weight: bold; }
+    .row > div:first-child { width: 200px; }
+    .row div { display: inline-block; text-align: right; width: 40px; margin-left: 2px; margin-right: 2px; }
+    </style>
+  </head>
+  <body>
+
+    <div class="row">
+      <div>Day:</div>
+      {{#each days}}
+        <div>{{this}}</div>
+      {{/each}}
+    </div>
+
+    {{#each constestHistoryArray}}
+    <div class="row">
+      <div>{{agent.name}}</div>
+      {{#each food}}
+        <div>{{this}}</div>
+      {{/each}}
+    </div>
+    {{/each}}
+
+  </body>
+
+</html>

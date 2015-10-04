@@ -1,0 +1,171 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>CS 105: Hunger Games Contest</title>
+		<link rel="icon" type="image/png" href="https://cs105.cs.illinois.edu/res/favicon.png" />
+
+		<!-- JS Contest Infrastructure -->
+		<script type="text/javascript" src="js/contestCommon.js"></script>
+		<script type="text/javascript" src="js/contestWeb.js"></script>
+
+		<!-- Players in the CS 105 Hunger Games Goes Here -->
+		<script type="text/javascript" src="players/hueTheHunter.js"></script>
+		<!-- End of list of players in the CS 105 Hunger Games -->
+
+		<!-- CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="res/cs105.css">
+
+		<style>
+		.hunt {
+			background-image: url('res/arrow20px.png');
+			background-position: 2px 2px;
+
+			background-repeat: no-repeat;
+			padding: 3px 3px 3px 20px;
+
+			background-color: #ffc38f;
+			border: solid 1px #ffa352;
+		}
+
+		.slack {
+			background-image: url('res/slack20px.png');
+			background-position: 2px 2px;
+
+			background-repeat: no-repeat;
+			padding: 3px 3px 3px 20px;
+
+			background-color: #c7e9ff;
+			border: solid 1px #52baff;
+		}
+
+		.day {
+			font-size: 22px;
+			text-align: center;
+			font-weight: bold;
+			border-bottom: dotted 1px black;
+		}
+		</style>
+
+		<!-- HBS & Templates -->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.3/handlebars.min.js"></script>
+		<script id="template-foodList" type="text/x-handlebars-template">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Player</th>
+						<th>Food</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each agents}}
+						<tr>
+							<td>{{name}}</td>
+							<td>{{food}}</td>
+						</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		</script>
+
+		<script id="template-foodListBonus" type="text/x-handlebars-template">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Player</th>
+						<th>Food</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each agents}}
+						<tr>
+							<td>
+								{{name}}<br>
+								<small class="text-muted">Outcome: <b>{{foodOutcomeString}}</b> food</small><br>
+								{{#if bonusFood}}
+								<small class="text-muted">Capital Bonus: <b>+{{bonusFood}}</b> food</small>
+								{{/if}}
+							</td>
+							<td>{{food}}</td>
+						</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		</script>
+
+		<script id="template-huntList" type="text/x-handlebars-template">
+			<table class="table" style="text-align: center;">
+				<thead>
+					<tr>
+						<th style="text-align: center;">Player</th>
+						<th colspan="2" style="text-align: center;">Actions</th>
+						<th style="text-align: center;">Player</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{#each results}}
+						<tr>
+							<td>
+								{{name1}}<br>
+								<small class="text-muted">Result: <b>{{food1}}</b> food</small>
+							</td>
+							<td>{{{result1}}}</td>
+							<td>{{{result2}}}</td>
+							<td>
+								{{name2}}<br>
+								<small class="text-muted">Result: <b>{{food2}}</b> food</small>
+							</td>
+						</tr>
+					{{/each}}
+				</tbody>
+			</table>
+		</script>
+
+
+	</head>
+	<body>
+		<div class="cs105-mp-header" id="content">
+			<div class="container">
+				<a href="https://cs105.cs.illinois.edu/" target="_blank"><img src="https://cs105.cs.illinois.edu/res/cs105_80px.png" alt="CS 105 Logo" /></a>
+				<h1>CS 105 Hunger Games</h1>
+				<p>Create a player to play in CS 105's very own Hunger Games!</p>
+			</div>
+		</div>
+
+		<div class="container">
+			<div style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
+				<button class="btn btn-primary" id="contestPlayOne" onclick="contestPlayOne()">
+					<span class="glyphicon glyphicon-step-forward"></span>
+					Play One Day
+				</button>
+				<button class="btn btn-primary" id="contestPlay" onclick="contestPlay()">
+					<span class="glyphicon glyphicon-play"></span>
+					Play
+				</button>
+				<button class="btn btn-primary" id="contestPause" onclick="contestPause()" disabled="disabled">
+					<span class="glyphicon glyphicon-pause"></span>
+					Pause
+				</button>
+			</div>
+
+			<div class="container" id="jserror" style="display: none">
+				<div class="row">
+					<div style="margin:20px 0;padding:10px 20px;border-left:3px solid #eee; background-color: #f9e7e7; border-color:#CE4844;">
+						<h4 style="color:#CE4844">The Games are unable to continue!</h4>
+						We are unable to continue with the CS 105 Hunger Games due to an error:
+						<ul>
+							<li>
+								<span id="jserror-text" style="font-weight: bold;"></span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<div id="contestDisplay">
+			</div>
+		</div>
+
+
+  </body>
+</html>
