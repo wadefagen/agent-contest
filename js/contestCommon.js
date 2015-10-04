@@ -39,7 +39,13 @@
     // Set the capital object
     capital = {
       blessingThreshold: 1,
-      day: 0
+      day: 0,
+
+      blessingThresholdHistory: [],
+      huntParticipationHistory: [],
+
+      initialPlayers: agents.length,
+      currentPlayers: agents.length
     };
   };
 
@@ -138,6 +144,11 @@
     });
 
     agents = nextRound;
+
+    // Update capital history data
+    capital.currentPlayers = agents.length;
+    capital.blessingThresholdHistory.push( capital.blessingThreshold );
+    capital.huntParticipationHistory.push( (totalRoundHunts / totalRounds) );
   };
 
   contest.each = function(cb) {
