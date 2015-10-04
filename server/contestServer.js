@@ -12,6 +12,40 @@ agentFileNamesNoPath.forEach(function (fileName) {
 });
 
 
+var agentProcessOnMessage = function(d) {
+  switch (d.message) {
+    case "result":
+      contest.getAgent(d.index).results[d.partnerId] = d.result;
+      break;
+
+    case "error":
+      contest.getAgent(d.index).food = -99998;
+      break;
+
+    case "name":
+      contest.getAgent(d.index).name = -d.name;
+      break;
+
+    case "unloaded":
+      runnerProcess = null;
+      clearTimeout(timeoutTimer);
+      runNextAgent();
+      break;
+  }
+};
+
+var agentProcessOnExit = function (d) {
+  if (currentAgent != null) {
+    currentAgent.food = -99999;
+    currentAgent = null;
+
+    runnerProcess = null;
+    clearTimeout(timeoutTimer);
+    runNextAgent();
+  }
+};
+
+
 
 var agentProcessOnMessage_f = function (agent) {
   return function (d) {
@@ -36,11 +70,8 @@ var agentProcessOnExit_f = function (agent) {
 
 var agentProcessTimeout = function (agent) {
   // Kill the agent process
-  agent.process.kill();
-
-  // Remove the agent
-  // TODO: Not just by starving it
-  agent.food = -999999;
+  currentAgent.food = -999999;
+  runnerProcess.kill();
 };
 
 
@@ -53,43 +84,62 @@ var startDay = function() {
   runNextAgent();
 };
 
+
+
+var runnerProcess = null;
+var timeoutTimer = null;
+var currentAgent = null;
+
 var runNextAgent = function() {
   var agent = contest.next();
 
   if (agent === undefined) {
     finishedDay();
   } else {
+    currentAgent = agent;
 
-    console.log("[contestServer]: [IPC]: Launching " + agent.file + " (id: " + agent.id + ", food: " + agent.food + ")");
-    agent.process = fork("server/contestServerAgentRunner.js", [agent.file]);
+    if (agentRunnerProcess == null) {
+      runnerProcess = fork("server/contestServerAgentRunner.js");
+      runnerProcess.on("message", agentProcessOnMessage);
+      runnerProcess.on("exit", agentProcessOnExit);
+    } else {
 
-    agent.timer = setTimeout(agentProcessTimeout, 200 + (50 * contest.count()), agent);
-    agent.process.on("message", agentProcessOnMessage_f(agent));
-    agent.process.on("exit", agentProcessOnExit_f(agent));
+      // Reset the timeout for the new agent
+      if (timeoutTimer != null) {
+        clearTimeout(timeoutTimer);
+      }
+      timeoutTimer = setTimeout(agentProcessTimeout, 200 + (50 * contest.count()), agent);
 
-    if (typeof agent.name == "undefined") {
-      agent.process.send({message: "requestName"});
+      // Load the agent
+      runnerProcess.send({message: "load", file: agent.file});
+
+      // Ensure we have the name saved
+      if (typeof agent.name == "undefined") {
+        runnerProcess.send({message: "requestName", index: contest.getAgents().indexOf(agent)});
+      }
+
+      // Request hunts
+      contest.each(function (partner, index) {
+        if (partner == agent) { return; }
+
+        agent.results[partner.id] = '-';
+        runnerProcess.send({
+          message: "hunt",
+          index: index,
+
+          selfId: agent.id,
+          self: contest.hunterData(agent, partner),
+
+          partnerId: partner.id,
+          partner: contest.hunterData(partner, agent),
+
+          capital: contest.capitalData()
+        });
+      };
+
+      // Unload agent
+      runnerProcess.send({message: "unload"});
     }
-
-    contest.each(function (partner) {
-      // Skip self
-      if (partner == agent) { return; }
-
-      agent.results[partner.id] = '-';
-      agent.process.send({
-        message: "hunt",
-
-        selfId: agent.id,
-        self: contest.hunterData(agent, partner),
-
-        partnerId: partner.id,
-        partner: contest.hunterData(partner, agent),
-
-        capital: contest.capitalData()
-      });
-    });
-
-    agent.process.send({message: "exit"});
   }
 };
 
@@ -135,10 +185,11 @@ var finishedDay = function() {
       players: contestHistory,
       capital: contest.capitalData()
     });
-    
+
     fs.writeFileSync("/var/www/html/jsContest/results/latest.json", output);
     fs.writeFileSync("/var/www/html/jsContest/results/" + Date.now() + ".json", output);
 
+    runnerProcess.send({message: "exit"});
     process.exit();
 
   } else {

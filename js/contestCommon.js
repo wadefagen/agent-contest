@@ -152,9 +152,9 @@
   };
 
   contest.each = function(cb) {
-    agents.forEach(function (agent) {
-      cb(agent);
-    });
+    for (var i = 0; i < agents.length; i++) {
+      cb(agent[i], i)l
+    }
   };
 
   contest.hunterData = function (agent, partner) {
