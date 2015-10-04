@@ -153,7 +153,7 @@
 
   contest.each = function(cb) {
     for (var i = 0; i < agents.length; i++) {
-      cb(agent[i], i)l
+      cb(agent[i], i)
     }
   };
 
