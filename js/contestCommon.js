@@ -190,16 +190,16 @@
       agentGraveyard.sort(function (a, b) {
         if (a.lastDay < b.lastDay) {
           // b lasted longer, b is better
-          return -1;
+          return 1;
         } else if (b.lastDay < a.lastDay) {
           // a lasted longer, a is better
-          return 1;
+          return -1;
         } else if (a.food < b.food) {
           // b has more food, b is better
-          return -1;
+          return 1;
         } else if (b.food < a.food) {
           // a has more food, a is better
-          return 1;
+          return -1;
         } else {
           return 0;
         }
