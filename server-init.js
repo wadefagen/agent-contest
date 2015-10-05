@@ -25,6 +25,6 @@ config.setupLocal(function (err) {
   process.on("exit", function (code, signal) {
     console.log("SERVER RUN COMPLETE -- WAITING TO RELAUNCH SELF")
     // Pause for 1min then relaunch self
-    //setTimeout(destroyAndRelaunch, 60 * 1000);
+    setTimeout(destroyAndRelaunch, 60 * 1000);
   });
 });

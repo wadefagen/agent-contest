@@ -1,12 +1,25 @@
+var agentCache = {};
+
+var loadAgent = function(fileName) {
+  if (agentCache[fileName] !== undefined) {
+    return agentCache[fileName];
+  } else {
+    var agent = require(fileName);
+    agentCache[fileName] = agent;
+    return agent;
+  }
+}
+
+
 var agent = null;
 if (process.argv.length == 3) {
-  agent = require(process.argv[2]);
+  agent = loadAgent(process.argv[2]);
 }
 
 process.on("message", function (d) {
   switch (d.message) {
     case "load":
-      agent = require(d.file);
+      agent = loadAgent(d.file);
       break;
 
     case "unload":

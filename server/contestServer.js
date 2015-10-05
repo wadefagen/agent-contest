@@ -189,14 +189,32 @@ var finishedDay = function() {
       d.agent.file = undefined;
     });
 
-    // Write output as JSON
-    var output = JSON.stringify({
-      players: constestHistoryArray,
-      capital: contest.capitalData()
-    });
 
-    fs.writeFileSync("./server-output/latest.json", output);
-    fs.writeFileSync("./server-output/" + Date.now() + ".json", output);
+    // Prep HBS template
+    var resultsTemplate = hbs.compile(fs.readFileSync('./server/results.hbs', 'utf8'));
+
+    var days = [];
+    for (var i = 0; i < contest.capitalData().day; i++) {
+      var blessing = false;
+      if (contest.capitalData().huntParticipationHistory[i] > contest.capitalData().blessingThresholdHistory[i]) {
+        blessing = true;
+      }
+
+      days.push({
+        day: (i + 1),
+        blessingThreshold: numeral(contest.capitalData().blessingThresholdHistory[i]).format("0.00%"),
+        huntParticipation: numeral(contest.capitalData().huntParticipationHistory[i]).format("0.00%"),
+        blessing: blessing
+      });
+    }
+
+    var output = resultsTemplate({ days: days, constestHistoryArray: constestHistoryArray });
+
+
+
+
+    fs.writeFileSync("./server-output/latest.html", output);
+    fs.writeFileSync("./server-output/" + Date.now() + ".html", output);
 
     runnerProcess.send({message: "exit"});
     process.exit();

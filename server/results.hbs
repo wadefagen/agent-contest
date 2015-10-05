@@ -8,22 +8,36 @@
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <style>
     .row { clear: both; white-space: nowrap; }
-    .row:first-of-type { border-bottom: solid 1px black; font-weight: bold; }
+    .row:first-of-type { font-weight: bold; }
+		.row:first-of-type > div { border-bottom: solid 1px black; font-weight: bold; }
+		.row:first-of-type > div > div { font-size: 8px; display: block; text-align: right; }
     .row > div:first-child { width: 200px; }
     .row div { display: inline-block; text-align: right; width: 40px; margin-left: 2px; margin-right: 2px; }
+		.blessed { background-color: #ffc; }
+		.player-default > div { background-color: #999; }
+		.player-isCourseStaff > div { background-color: #cff; }
+		.player-wade > div { background-color: #ccf; }
     </style>
   </head>
   <body>
 
     <div class="row">
-      <div>Day:</div>
+      <div>
+				Day:<br>
+				<span style="font-size: 8px;">Blessing Threshold:</span><br>
+				<span style="font-size: 8px;">Hunt Participation:</span>
+			</div>
       {{#each days}}
-        <div>{{this}}</div>
+        <div{{#if blessing}} class="blessed"{{/if}}>
+					{{day}}
+					<div>{{blessingThreshold}}</div>
+					<div>{{huntParticipation}}</div>
+				</div>
       {{/each}}
     </div>
 
     {{#each constestHistoryArray}}
-    <div class="row">
+    <div class="row{{#if isDefaultPlayer}} player-default{{/if}}{{#if isCourseStaff}} player-courseStaff{{/if}}{{#if isWade}} player-wade{{/if}}">
       <div>{{agent.name}}</div>
       {{#each food}}
         <div>{{this}}</div>
