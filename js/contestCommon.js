@@ -153,7 +153,7 @@
 
   contest.each = function(cb) {
     for (var i = 0; i < agents.length; i++) {
-      cb(agent[i], i)
+      cb(agents[i], i)
     }
   };
 
@@ -174,8 +174,12 @@
   };
 
   contest.getAgent = function (index) {
-    if (index >= 0 && agents.Length < index) { return agents[index]; }
-    else { return undefined; }
+    if (index < 0 || index >= agents.length) {
+      console.log("Bad index: " + index + " / " + agents.length);
+      return undefined;
+    } else {
+      return agents[index];
+    }
   };
 
   contest.getAgents = function() {

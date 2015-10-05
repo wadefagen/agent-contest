@@ -23,18 +23,21 @@ var agentProcessOnMessage = function(d) {
       break;
 
     case "name":
-      contest.getAgent(d.index).name = -d.name;
+      console.log(d.index);
+      contest.getAgent(d.index).name = d.name;
       break;
 
     case "unloaded":
-      runnerProcess = null;
+      currentAgent = null;
       clearTimeout(timeoutTimer);
       runNextAgent();
       break;
   }
 };
 
-var agentProcessOnExit = function (d) {
+var agentProcessOnExit = function (code, signal) {
+  console.log("[contestServer]: [IPC]: Player process exit (code=" + code + ")");
+
   if (currentAgent != null) {
     currentAgent.food = -99999;
     currentAgent = null;
@@ -47,28 +50,9 @@ var agentProcessOnExit = function (d) {
 
 
 
-var agentProcessOnMessage_f = function (agent) {
-  return function (d) {
-    if (d.message == "result") {
-      agent.results[d.partnerId] = d.result;
-    } else if (d.message == "error") {
-      agent.food = -998;
-    } else if (d.message == "name") {
-      agent.name = d.name;
-    }
-  };
-};
-
-var agentProcessOnExit_f = function (agent) {
-  return function (code, signal) {
-    console.log("[contestServer]: [IPC]: Player process exit (id=" + agent.id + ", code=" + code + ")");
-    clearTimeout(agent.timer);
-    runNextAgent();
-  };
-};
-
-
 var agentProcessTimeout = function (agent) {
+  console.log("[contestServer]: [Timeout]: Timeout!");
+
   // Kill the agent process
   currentAgent.food = -999999;
   runnerProcess.kill();
@@ -80,7 +64,7 @@ var agentProcessTimeout = function (agent) {
 var startDay = function() {
   console.log("[contestServer]: == STARTING DAY ==");
   contest.startDay();
-  console.log("[contestServer]: capital: " + JSON.stringify(contest.capitalData()));
+  console.log("[contestServer]: capital: Day #" + contest.capitalData().day);
   runNextAgent();
 };
 
@@ -98,48 +82,49 @@ var runNextAgent = function() {
   } else {
     currentAgent = agent;
 
-    if (agentRunnerProcess == null) {
+    if (runnerProcess == null) {
       runnerProcess = fork("server/contestServerAgentRunner.js");
       runnerProcess.on("message", agentProcessOnMessage);
       runnerProcess.on("exit", agentProcessOnExit);
-    } else {
-
-      // Reset the timeout for the new agent
-      if (timeoutTimer != null) {
-        clearTimeout(timeoutTimer);
-      }
-      timeoutTimer = setTimeout(agentProcessTimeout, 200 + (50 * contest.count()), agent);
-
-      // Load the agent
-      runnerProcess.send({message: "load", file: agent.file});
-
-      // Ensure we have the name saved
-      if (typeof agent.name == "undefined") {
-        runnerProcess.send({message: "requestName", index: contest.getAgents().indexOf(agent)});
-      }
-
-      // Request hunts
-      contest.each(function (partner, index) {
-        if (partner == agent) { return; }
-
-        agent.results[partner.id] = '-';
-        runnerProcess.send({
-          message: "hunt",
-          index: index,
-
-          selfId: agent.id,
-          self: contest.hunterData(agent, partner),
-
-          partnerId: partner.id,
-          partner: contest.hunterData(partner, agent),
-
-          capital: contest.capitalData()
-        });
-      };
-
-      // Unload agent
-      runnerProcess.send({message: "unload"});
     }
+
+    // Reset the timeout for the new agent
+    if (timeoutTimer != null) {
+      clearTimeout(timeoutTimer);
+    }
+    timeoutTimer = setTimeout(agentProcessTimeout, 200 + (50 * contest.count()), agent);
+
+    // Load the agent
+    runnerProcess.send({message: "load", file: agent.file});
+
+    // Ensure we have the name saved
+    if (typeof agent.name == "undefined") {
+      runnerProcess.send({message: "requestName", index: contest.getAgents().indexOf(agent)});
+    }
+
+    // Request hunts
+    var index = contest.getAgents().indexOf(agent);
+    contest.each(function (partner) {
+      if (partner == agent) { return; }
+
+      agent.results[partner.id] = '-';
+      runnerProcess.send({
+        message: "hunt",
+        index: index,
+
+        selfId: agent.id,
+        self: contest.hunterData(agent, partner),
+
+        partnerId: partner.id,
+        partner: contest.hunterData(partner, agent),
+
+        capital: contest.capitalData()
+      });
+    });
+
+    // Unload agent
+    runnerProcess.send({message: "unload"});
+
   }
 };
 
@@ -180,14 +165,38 @@ var finishedDay = function() {
       }
     });
 
+    constestHistoryArray.forEach(function (d) {
+      console.log(d.agent.file);
+      var fileName = d.agent.file;
+
+      // Identify me
+      if (fileName.indexOf("waf.js") != -1) { d.agent.isWade = true; }
+
+      // Identify course staff
+      ["mhellwig", "ysun69", "hcai6", "srmurth2", "aaahuja2", "abhardw3", "hoskere2", "ckulkarn", "mahdian2", "zhang349", "chizhou3", "sihanli2", "rsehgal2"].forEach(function (id) {
+        if (fileName.indexOf(id + ".js") != -1) {
+          d.agent.isCourseStaff = true;
+        }
+      });
+
+      // Identify default players
+      ["hueTheHunter", "samTheSlacker", "randomRaj", "randomRiko"].forEach(function (id) {
+        if (fileName.indexOf(id + ".js") != -1) {
+          d.agent.isDefaultPlayer = true;
+        }
+      });
+
+      d.agent.file = undefined;
+    });
+
     // Write output as JSON
     var output = JSON.stringify({
-      players: contestHistory,
+      players: constestHistoryArray,
       capital: contest.capitalData()
     });
 
-    fs.writeFileSync("/var/www/html/jsContest/results/latest.json", output);
-    fs.writeFileSync("/var/www/html/jsContest/results/" + Date.now() + ".json", output);
+    fs.writeFileSync("./server-output/latest.json", output);
+    fs.writeFileSync("./server-output/" + Date.now() + ".json", output);
 
     runnerProcess.send({message: "exit"});
     process.exit();
